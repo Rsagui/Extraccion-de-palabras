@@ -43,18 +43,28 @@ def visualizar_red(red, paso_actual, letra_actual, paso_descripcion, carpeta_eje
     try:
         dot = Digraph(comment='Red de Petri')
         
-        # Configuración general mejorada
-        dot.attr(rankdir='TB', size='16,20', dpi='300',
-                nodesep='1.2', ranksep='1.8',
-                fontname='Arial', fontsize='16',
-                bgcolor='#FAFAFA')
+        # Configuración para maximizar el uso del espacio
+        dot.attr(
+            rankdir='TB',  # Top to Bottom
+            size='8.5,11!',  # Tamaño carta forzado (con ! para ignorar ajustes automáticos)
+            margin='0.2',  # Margen mínimo
+            dpi='300',
+            nodesep='0.5',  # Separación horizontal entre nodos
+            ranksep='0.7',  # Separación vertical entre niveles
+            fontname='Arial',
+            fontsize='16',
+            bgcolor='white'
+        )
         
-        # Estilo de bordes y flechas
+        # Estilo de bordes y flechas más gruesos
         dot.attr('edge', 
-                fontname='Arial', fontsize='12', 
-                arrowsize='0.9', penwidth='1.5')
+                fontname='Arial', 
+                fontsize='14', 
+                arrowsize='1.2', 
+                penwidth='2.0',
+                color='#333333')
         
-        # Lugares (círculos)
+        # Lugares (círculos) con mayor tamaño
         for lugar, tokens in red.lugares.items():
             # Colores según estado
             if lugar == 'inicio':
@@ -67,23 +77,28 @@ def visualizar_red(red, paso_actual, letra_actual, paso_descripcion, carpeta_eje
                 color_borde = '#2E86C1' if tokens > 0 else '#AED6F1'
                 color_relleno = '#AED6F1' if tokens > 0 else '#EBF5FB'
             
-            # Tamaño según importancia
+            # Tamaño según importancia - MUCHO MÁS GRANDE
             if lugar in ['inicio', 'aprobado']:
-                tamano = '1.6'
+                tamano = '1.2'
             else:
-                tamano = '1.4'
+                tamano = '1.0'
             
             # Etiqueta con información de tokens
             etiqueta = f"{lugar}\n({tokens} token{'s' if tokens != 1 else ''})"
             
             # Crear nodo
             dot.node(lugar, etiqueta,
-                    shape='circle', width=tamano, height=tamano,
-                    style='filled', fillcolor=color_relleno,
-                    color=color_borde, penwidth='2.0',
-                    fontname='Arial', fontsize='14')
+                    shape='circle', 
+                    width=tamano, 
+                    height=tamano,
+                    style='filled', 
+                    fillcolor=color_relleno,
+                    color=color_borde, 
+                    penwidth='2.5',
+                    fontname='Arial Bold', 
+                    fontsize='16')
         
-        # Transiciones (rectángulos)
+        # Transiciones (rectángulos) con mayor tamaño
         for transicion in red.transiciones:
             # Nombre más legible
             nombre_corto = transicion.split('_')[-1]
@@ -92,18 +107,23 @@ def visualizar_red(red, paso_actual, letra_actual, paso_descripcion, carpeta_eje
             if red.transicion_disponible(transicion):
                 color_borde = '#C0392B'  # Rojo oscuro
                 color_relleno = '#F5B7B1'  # Rojo claro
-                ancho_borde = '2.5'
+                ancho_borde = '3.0'
             else:
                 color_borde = '#922B21'  # Rojo más oscuro
                 color_relleno = '#FADBD8'  # Rojo muy claro
-                ancho_borde = '1.5'
+                ancho_borde = '2.0'
             
             # Crear nodo
             dot.node(transicion, nombre_corto,
-                    shape='rectangle', width='1.2', height='0.6',
-                    style='filled,rounded', fillcolor=color_relleno,
-                    color=color_borde, penwidth=ancho_borde,
-                    fontname='Arial Bold', fontsize='12')
+                    shape='rectangle', 
+                    width='0.8', 
+                    height='0.5',
+                    style='filled,rounded', 
+                    fillcolor=color_relleno,
+                    color=color_borde, 
+                    penwidth=ancho_borde,
+                    fontname='Arial Bold', 
+                    fontsize='16')
         
         # Conexiones con estilos mejorados
         for transicion, datos in red.transiciones.items():
@@ -111,37 +131,19 @@ def visualizar_red(red, paso_actual, letra_actual, paso_descripcion, carpeta_eje
             for lugar, peso in datos['inputs']:
                 dot.edge(lugar, transicion, 
                         label=str(peso) if peso > 1 else "",
-                        color='#2471A3', penwidth='1.8',
-                        arrowhead='normal', arrowsize='0.9')
+                        color='#2471A3', 
+                        penwidth='2.0',
+                        arrowhead='normal', 
+                        arrowsize='1.2')
             
             # Arcos de salida (transición -> lugar)
             for lugar, peso in datos['outputs']:
                 dot.edge(transicion, lugar, 
                         label=str(peso) if peso > 1 else "",
-                        color='#C0392B', penwidth='1.8',
-                        arrowhead='normal', arrowsize='0.9')
-        
-        # Organización vertical mejorada con agrupación lógica
-        niveles = [
-            ['inicio'],
-            ['encontrar_A'],
-            ['A', 'encontrar_P'], 
-            ['P', 'encontrar_R'],
-            ['R', 'encontrar_O'],
-            ['O', 'encontrar_B'],
-            ['B', 'encontrar_A2'],
-            ['A2', 'encontrar_D'],
-            ['D', 'encontrar_O2'],
-            ['O2', 'completado'],
-            ['aprobado']
-        ]
-        
-        for nivel in niveles:
-            with dot.subgraph() as s:
-                s.attr(rank='same')
-                for nodo in nivel:
-                    if nodo in red.lugares or nodo in red.transiciones:
-                        s.node(nodo)
+                        color='#C0392B', 
+                        penwidth='2.0',
+                        arrowhead='normal', 
+                        arrowsize='1.2')
         
         # Título y leyenda mejorados
         if letra_actual:
@@ -149,27 +151,66 @@ def visualizar_red(red, paso_actual, letra_actual, paso_descripcion, carpeta_eje
         else:
             titulo = f"Paso {paso_actual}: {paso_descripcion}"
             
-        dot.attr(label=titulo, labelloc='t', fontsize='20', fontname='Arial Bold')
+        dot.attr(label=titulo, labelloc='t', fontsize='22', fontname='Arial Bold')
         
-        # Añadir leyenda
+        # Añadir leyenda mejorada en la parte superior derecha
         with dot.subgraph(name='cluster_legend') as legend:
-            legend.attr(label='Leyenda', fontsize='14', fontname='Arial Bold', 
-                      style='filled', fillcolor='#F8F9F9', color='#5D6D7E')
-            legend.node('legend_token', 'Con token', shape='circle', 
-                      style='filled', fillcolor='#AED6F1', color='#2E86C1')
-            legend.node('legend_no_token', 'Sin token', shape='circle', 
-                      style='filled', fillcolor='#EBF5FB', color='#AED6F1')
-            legend.node('legend_trans_active', 'Transición\ndisponible', shape='rectangle', 
-                      style='filled,rounded', fillcolor='#F5B7B1', color='#C0392B')
-            legend.node('legend_trans_inactive', 'Transición\nno disponible', shape='rectangle', 
-                      style='filled,rounded', fillcolor='#FADBD8', color='#922B21')
+            legend.attr(
+                label='Leyenda', 
+                fontsize='18', 
+                fontname='Arial Bold',
+                style='filled,rounded', 
+                fillcolor='#F8F9F9', 
+                color='#5D6D7E',
+                margin='10',
+                rank='sink'  # Forzar a la parte inferior
+            )
+            
+            # Nodos de leyenda más grandes
+            legend.node('legend_token', 'Con token', 
+                      shape='circle', 
+                      style='filled', 
+                      fillcolor='#AED6F1', 
+                      color='#2E86C1',
+                      width='0.8', 
+                      height='0.8', 
+                      fontsize='14')
+            
+            legend.node('legend_no_token', 'Sin token', 
+                      shape='circle', 
+                      style='filled', 
+                      fillcolor='#EBF5FB', 
+                      color='#AED6F1',
+                      width='0.8', 
+                      height='0.8', 
+                      fontsize='14')
+            
+            legend.node('legend_trans_active', 'Transición\ndisponible', 
+                      shape='rectangle', 
+                      style='filled,rounded', 
+                      fillcolor='#F5B7B1', 
+                      color='#C0392B',
+                      width='1.0', 
+                      height='0.6', 
+                      fontsize='14')
+            
+            legend.node('legend_trans_inactive', 'Transición\nno disponible', 
+                      shape='rectangle', 
+                      style='filled,rounded', 
+                      fillcolor='#FADBD8', 
+                      color='#922B21',
+                      width='1.0', 
+                      height='0.6', 
+                      fontsize='14')
             
             # Organizar leyenda horizontalmente
             legend.attr(rank='same')
-            legend.edges([('legend_token', 'legend_no_token', 'legend_trans_active', 'legend_trans_inactive')])
-            legend.attr(style='invis')
+            legend.edge('legend_token', 'legend_no_token')
+            legend.edge('legend_no_token', 'legend_trans_active')
+            legend.edge('legend_trans_active', 'legend_trans_inactive')
+            legend.edge_attr.update(style='invis')
         
-        # Guardar imagen con mejor calidad
+        # Guardar imagen con mejor calidad y tamaño forzado
         filepath = os.path.join(carpeta_ejecucion, f"paso_{paso_actual:02d}")
         dot.render(filepath, format='png', cleanup=True)
         
@@ -320,3 +361,4 @@ if __name__ == "__main__":
         else:
             print("Error: Solo letras y números (sin espacios/símbolos)")
             menu()
+
